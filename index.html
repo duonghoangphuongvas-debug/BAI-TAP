@@ -1,0 +1,594 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Ôn Tập Lịch Sử 9 - Bài 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
+            min-height: 100vh;
+        }
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full text-center mb-4">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-amber-300 drop-shadow-md mb-2">
+            🏆 ÔN TẬP LỊCH SỬ 9 - BÀI 3 🏆
+        </h1>
+        <p class="text-slate-200 text-lg font-medium">Châu Á từ năm 1918 đến năm 1945</p>
+    </div>
+
+    <div class="canvas-container w-full max-w-3xl">
+        <canvas id="quizCanvas" width="800" height="600" class="w-full h-auto block"></canvas>
+    </div>
+
+    <div class="mt-4 text-slate-300 text-sm flex gap-6">
+        <span>💡 Mẹo: Nhấn vào các đáp án trực tiếp trên bảng hoặc dùng phím 1, 2, 3, 4</span>
+    </div>
+
+    <script>
+        // Web Audio API Sound Effects Generator
+        class SoundFX {
+            constructor() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            }
+
+            playCorrect() {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+
+            playWrong() {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(120, now + 0.3);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+
+            playClick() {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        }
+
+        const soundFX = new SoundFX();
+
+        const questionsData = [
+            {
+                question: "Sau Chiến tranh thế giới thứ nhất, kinh tế Nhật Bản phát triển nhanh chóng trong khoảng thời gian bao lâu?",
+                options: ["12 tháng.", "18 tháng.", "24 tháng.", "36 tháng."],
+                correct: 1,
+                rationale: "Kinh tế Nhật Bản bùng nổ mạnh mẽ nhưng chỉ diễn ra trong ngắn ngủi khoảng 18 tháng sau Chiến tranh thế giới thứ nhất."
+            },
+            {
+                question: "Đảng Cộng sản Nhật Bản được thành lập vào thời gian nào?",
+                options: ["Tháng 5 - 1920.", "Tháng 3 - 1921.", "Tháng 7 - 1922.", "Tháng 11 - 1923."],
+                correct: 2,
+                rationale: "Đảng Cộng sản Nhật Bản chính thức ra đời vào tháng 7 - 1922, đánh dấu bước phát triển mới của phong trào công nhân."
+            },
+            {
+                question: "Sự kiện nào xảy ra năm 1927 đã làm cho hàng chục ngân hàng ở Nhật Bản phải đóng cửa?",
+                options: ["Cuộc khủng hoảng tài chính ở Tô-ki-ô.", "Cuộc khủng hoảng kinh tế thế giới.", "Trận động đất Cạn-tô.", "Cuộc tổng bãi công của công nhân."],
+                correct: 0,
+                rationale: "Năm 1927, cuộc khủng hoảng tài chính nghiêm trọng bùng nổ tại Tô-ki-ô khiến hàng loạt ngân hàng phá sản."
+            },
+            {
+                question: "Trong cuộc Đại suy thoái (1929 - 1933), sản lượng công nghiệp của Nhật Bản năm 1931 giảm bao nhiêu % so với năm 1929?",
+                options: ["20,5%.", "25,8%.", "32,5%.", "80,0%."],
+                correct: 2,
+                rationale: "Cuộc Đại suy thoái làm sản lượng công nghiệp Nhật Bản năm 1931 giảm sút sâu sắc tới 32,5% so với năm 1929."
+            },
+            {
+                question: "Để đưa đất nước thoát khỏi cuộc Đại suy thoái (1929 - 1933), Chính phủ Nhật Bản đã thực hiện giải pháp gì?",
+                options: ["Thực hiện cải cách kinh tế - xã hội ôn hòa.", "Mở cửa giao thương với phương Tây.", "Tăng cường quân sự hóa bộ máy nhà nước và gây chiến tranh xâm lược.", "Đẩy mạnh cổ phần hóa tập đoàn tư bản."],
+                correct: 2,
+                rationale: "Nhật Bản chọn con đường phátxít hóa bộ máy nhà nước, tăng cường quân sự hóa và đẩy mạnh chiến tranh xâm lược để thoát khủng hoảng."
+            },
+            {
+                question: "Năm 1927, Thủ tướng Ta-na-ca đã trình lên Nhật hoàng bản tài liệu nào đề ra kế hoạch xâm lược và thống trị thế giới?",
+                options: ["Tuyên ngôn chiến tranh.", "Tấu trình.", "Hiệp ước an ninh.", "Nhật lệnh số 1."],
+                correct: 1,
+                rationale: "Bản 'Tấu trình' năm 1927 của Thủ tướng Ta-na-ca vạch ra chiến lược xâm chiếm Trung Quốc và bành trướng toàn cầu."
+            },
+            {
+                question: "Việc Nhật Bản xâm chiếm vùng Đông Bắc Trung Quốc vào tháng 9 - 1931 đã đánh dấu điều gì?",
+                options: ["Chiến tranh thế giới thứ hai bùng nổ.", "Hình thành 'lò lửa chiến tranh' ở châu Á - Thái Bình Dương.", "Sự thất bại hoàn toàn của quân Đồng minh.", "Nhật Bản làm chủ toàn bộ châu Á."],
+                correct: 1,
+                rationale: "Hành động này đánh dấu sự hình thành một 'lò lửa chiến tranh' cực kỳ nguy hiểm ở khu vực châu Á - Thái Bình Dương."
+            },
+            {
+                question: "Tháng 12 - 1941, quân đội Nhật Bản bất ngờ tấn công căn cứ quân sự nào của Mỹ ở Thái Bình Dương?",
+                options: ["Đảo Guam.", "Quần đảo Ha-wai.", "Trân Châu Cảng.", "Căn cứ Ma-ni-la."],
+                correct: 2,
+                rationale: "Trân Châu Cảng là căn cứ hải quân trọng yếu của Mỹ bị Nhật bất ngờ tập kích vào tháng 12 - 1941."
+            },
+            {
+                question: "Nhật Bản chính thức tuyên bố chấp nhận đầu hàng không điều kiện trước quân Đồng minh vào thời gian nào?",
+                options: ["Ngày 9 - 5 - 1945.", "Ngày 15 - 8 - 1945.", "Ngày 2 - 9 - 1945.", "Ngày 12 - 9 - 1945."],
+                correct: 1,
+                rationale: "Ngày 15 - 8 - 1945, Nhật Bản chính thức tuyên bố đầu hàng không điều kiện, kết thúc Chiến tranh thế giới thứ hai."
+            },
+            {
+                question: "Thắng lợi của sự kiện lịch sử thế giới nào năm 1917 đã tác động mạnh mẽ đến phong trào giải phóng dân tộc ở châu Á?",
+                options: ["Chiến tranh thế giới thứ nhất.", "Cách mạng tháng Mười Nga.", "Cách mạng Tân Hợi.", "Sự ra đời của Quốc tế Cộng sản."],
+                correct: 1,
+                rationale: "Cách mạng tháng Mười Nga năm 1917 đã cổ vũ mạnh mẽ và mở ra thời đại mới cho phong trào giải phóng dân tộc."
+            },
+            {
+                question: "Đảng Cộng sản đầu tiên được thành lập ở khu vực Đông Nam Á là đảng nào?",
+                options: ["Đảng Cộng sản In-đô-nê-xi-a (tháng 5 - 1920).", "Đảng Cộng sản Việt Nam (đầu năm 1930).", "Đảng Cộng sản Mã Lai (tháng 4 - 1930).", "Đảng Cộng sản Phi-líp-pin (tháng 11 - 1930)."],
+                correct: 0,
+                rationale: "Đảng Cộng sản In-đô-nê-xi-a thành lập tháng 5 - 1920 là chính đảng cộng sản ra đời sớm nhất ở khu vực Đông Nam Á."
+            },
+            {
+                question: "Cuộc khởi nghĩa của giai cấp công nhân và nông dân ở Gia-va và Xu-ma-tơ-ra (1926 - 1927) diễn ra ở quốc gia nào?",
+                options: ["Việt Nam.", "In-đô-nê-xi-a.", "Mã Lai.", "Phi-líp-pin."],
+                correct: 1,
+                rationale: "Gia-va và Xu-ma-tơ-ra là các địa danh thuộc đất nước In-đô-nê-xi-a."
+            },
+            {
+                question: "Ở Việt Nam, phong trào đấu tranh tiêu biểu của giai cấp vô sản trong những năm 1930 - 1931 là phong trào nào?",
+                options: ["Khởi nghĩa Ba Tơ.", "Khởi nghĩa Yên Bái.", "Cao trào Xô viết Nghệ - Tĩnh.", "Phong trào Đông Dương đại hội."],
+                correct: 2,
+                rationale: "Cao trào Xô viết Nghệ - Tĩnh (1930 - 1931) là đỉnh cao của phong trào cách mạng do Đảng lãnh đạo."
+            },
+            {
+                question: "Phong trào Tha-kin là tổ chức yêu nước đại diện cho phong trào dân chủ tư sản ở nước nào?",
+                options: ["In-đô-nê-xi-a.", "Miến Điện.", "Mã Lai.", "Cam-pu-chia."],
+                correct: 1,
+                rationale: "Phong trào Tha-kin là tổ chức tiêu biểu của trí thức và thanh niên yêu nước ở Miến Điện."
+            },
+            {
+                question: "Ở Lào, cuộc khởi nghĩa chống thực dân Pháp kéo dài hơn 30 năm (1901 - 1937) do ai lãnh đạo?",
+                options: ["A-cha Hem-chiêu.", "Ong Kẹo và Com-ma-dam.", "Xu-pha-nu-vông.", "Pha-ngùm."],
+                correct: 1,
+                rationale: "Khởi nghĩa của nhân dân Lào do hai người anh hùng Ong Kẹo và Com-ma-dam lãnh đạo bền bỉ suốt hơn 3 thập kỷ."
+            },
+            {
+                question: "Năm 1945, nhân dân những nước nào ở Đông Nam Á đã nổi dậy giành thắng lợi và tuyên bố độc lập khi Nhật đầu hàng Đồng minh?",
+                options: ["Thái Lan, Xin-ga-po, Ma-lai-xi-a.", "In-đô-nê-xi-a, Việt Nam, Lào.", "Phi-líp-pin, Miến Điện, Cam-pu-chia.", "Bru-nây, Đông Ti-mo, Xiêm."],
+                correct: 1,
+                rationale: "Tận dụng thời cơ Nhật đầu hàng, In-đô-nê-xi-a, Việt Nam và Lào đã đứng lên tổng khởi nghĩa giành độc lập năm 1945."
+            }
+        ];
+
+        const canvas = document.getElementById('quizCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game states: 'START', 'PLAYING', 'FEEDBACK', 'GAMEOVER'
+        let gameState = 'START';
+        let currentQIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+        let isCorrectAnswer = false;
+
+        // Button boundaries for click detection
+        let optionRects = [];
+        let actionButtonRect = null;
+
+        function drawButton(x, y, w, h, text, bgColor, textColor, radius = 12) {
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, radius);
+            ctx.fillStyle = bgColor;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 4;
+            ctx.fill();
+            ctx.shadowBlur = 0; // reset shadow
+
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 20px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Text wrapping or single line fitting
+            wrappedText(text, x + w / 2, y + h / 2, w - 40, 24);
+        }
+
+        function wrappedText(text, x, y, maxWidth, lineHeight) {
+            ctx.fillText(text, x, y);
+        }
+
+        function renderStartScreen() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Decorative background header
+            const grad = ctx.createLinearGradient(0, 0, 0, 200);
+            grad.addColorStop(0, '#312e81');
+            grad.addColorStop(1, '#4f46e5');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, 220);
+
+            ctx.fillStyle = '#fef08a';
+            ctx.font = 'bold 36px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('TRÒ CHƠI TRẮC NGHIỆM LỊCH SỬ', canvas.width / 2, 80);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '22px "Segoe UI", sans-serif';
+            ctx.fillText('Châu Á từ năm 1918 đến năm 1945 (Lịch sử 9)', canvas.width / 2, 135);
+
+            // Instructions Box
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(100, 260, 600, 180, 16);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 22px "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('📌 Hướng dẫn tham gia:', 130, 300);
+
+            ctx.font = '18px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#334155';
+            ctx.fillText('• Trả lời các câu hỏi trắc nghiệm kiến thức lịch sử.', 140, 340);
+            ctx.fillText('• Lắng nghe âm thanh phản hồi sinh động khi chọn đúng/sai.', 140, 370);
+            ctx.fillText('• Đọc phần giải thích chi tiết để nắm vững kiến thức.', 140, 400);
+
+            // Start Button
+            actionButtonRect = { x: 250, y: 470, w: 300, h: 65 };
+            drawButton(actionButtonRect.x, actionButtonRect.y, actionButtonRect.w, actionButtonRect.h, '🚀 BẮT ĐẦU NGAY', '#10b981', '#ffffff', 16);
+        }
+
+        function renderPlayingScreen() {
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const q = questionsData[currentQIndex];
+
+            // Top bar info
+            ctx.fillStyle = '#312e81';
+            ctx.fillRect(0, 0, canvas.width, 70);
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 20px "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Câu hỏi ${currentQIndex + 1} / ${questionsData.length}`, 40, 35);
+
+            ctx.fillStyle = '#fef08a';
+            ctx.textAlign = 'right';
+            ctx.fillText(`Điểm: ${score}`, canvas.width - 40, 35);
+
+            // Question Box
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.roundRect(40, 90, 720, 110, 12);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 20px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            wrapTextMultiLine(q.question, canvas.width / 2, 120, 660, 26);
+
+            // Options
+            optionRects = [];
+            const startY = 220;
+            const btnHeight = 65;
+            const spacing = 15;
+            const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'];
+
+            q.options.forEach((opt, index) => {
+                const y = startY + index * (btnHeight + spacing);
+                const isSelected = selectedOption === index;
+                let bg = colors[index];
+                let textColor = '#ffffff';
+
+                if (gameState === 'FEEDBACK') {
+                    if (index === q.correct) {
+                        bg = '#059669'; // Green for correct
+                    } else if (isSelected && !isCorrectAnswer) {
+                        bg = '#dc2626'; // Red for wrong selection
+                    } else {
+                        bg = '#cbd5e1'; // Faded for others
+                        textColor = '#64748b';
+                    }
+                }
+
+                optionRects.push({ x: 40, y: y, w: 720, h: btnHeight, index: index });
+
+                // Draw Option Button
+                ctx.beginPath();
+                ctx.roundRect(40, y, 720, btnHeight, 10);
+                ctx.fillStyle = bg;
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetY = 3;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Option Label (A, B, C, D)
+                const labels = ['A', 'B', 'C', 'D'];
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.roundRect(50, y + 8, 48, 48, 8);
+                ctx.fill();
+
+                ctx.fillStyle = textColor === '#ffffff' ? '#ffffff' : '#334155';
+                ctx.font = 'bold 20px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[index], 74, y + 33);
+
+                // Option Text
+                ctx.textAlign = 'left';
+                ctx.font = '18px "Segoe UI", sans-serif';
+                ctx.fillStyle = textColor;
+                
+                // Truncate or fit option text neatly
+                let displayOpt = opt;
+                if (opt.length > 70) {
+                    displayOpt = opt.substring(0, 67) + '...';
+                }
+                ctx.fillText(displayOpt, 115, y + 33);
+            });
+
+            // If in feedback mode, show rationale and Next button
+            if (gameState === 'FEEDBACK') {
+                ctx.fillStyle = isCorrectAnswer ? '#d1fae5' : '#fee2e2';
+                ctx.strokeStyle = isCorrectAnswer ? '#10b981' : '#ef4444';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(40, 500, 520, 80, 10);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = isCorrectAnswer ? '#065f46' : '#991b1b';
+                ctx.font = 'bold 16px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(isCorrectAnswer ? '🎉 Chính xác rất tuyệt vời!' : '❌ Chưa chính xác, hãy xem lại!', 60, 522);
+
+                ctx.font = '14px "Segoe UI", sans-serif';
+                ctx.fillStyle = '#334155';
+                wrapTextFeedback(q.rationale, 60, 545, 490, 18);
+
+                // Next Button
+                actionButtonRect = { x: 580, y: 500, w: 180, h: 80 };
+                drawButton(actionButtonRect.x, actionButtonRect.y, actionButtonRect.w, actionButtonRect.h, 
+                    currentQIndex < questionsData.length - 1 ? 'Tiếp Tục ➡' : 'Kết Thúc 🏆', '#4f46e5', '#ffffff', 10);
+            }
+        }
+
+        function renderGameOverScreen() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, '#312e81');
+            grad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#fef08a';
+            ctx.font = 'bold 36px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎉 HOÀN THÀNH XUẤT SẮC! 🎉', canvas.width / 2, 130);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px "Segoe UI", sans-serif';
+            ctx.fillText(`Tổng điểm của bạn: ${score} / ${questionsData.length}`, canvas.width / 2, 200);
+
+            // Performance message
+            let msg = 'Bạn đã nắm rất vững kiến thức Lịch sử Bài 3!';
+            if (score < questionsData.length * 0.5) {
+                msg = 'Hãy ôn tập thêm nội dung SGK Lịch sử 9 nhé!';
+            }
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'italic 20px "Segoe UI", sans-serif';
+            ctx.fillText(msg, canvas.width / 2, 260);
+
+            // Restart Button
+            actionButtonRect = { x: 250, y: 380, w: 300, h: 65 };
+            drawButton(actionButtonRect.x, actionButtonRect.y, actionButtonRect.w, actionButtonRect.h, '🔄 Chơi Lại Từ Đầu', '#10b981', '#ffffff', 16);
+        }
+
+        function wrapTextMultiLine(text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let currentY = y;
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, currentY);
+                    line = words[n] + ' ';
+                    currentY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, currentY);
+        }
+
+        function wrapTextFeedback(text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let currentY = y;
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, currentY);
+                    line = words[n] + ' ';
+                    currentY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, currentY);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (gameState === 'START') {
+                renderStartScreen();
+            } else if (gameState === 'PLAYING' || gameState === 'FEEDBACK') {
+                renderPlayingScreen();
+            } else if (gameState === 'GAMEOVER') {
+                renderGameOverScreen();
+            }
+        }
+
+        // Handle Mouse Clicks
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+
+            if (gameState === 'START') {
+                if (
+                    actionButtonRect &&
+                    mouseX >= actionButtonRect.x && mouseX <= actionButtonRect.x + actionButtonRect.w &&
+                    mouseY >= actionButtonRect.y && mouseY <= actionButtonRect.y + actionButtonRect.h
+                ) {
+                    soundFX.playClick();
+                    currentQIndex = 0;
+                    score = 0;
+                    gameState = 'PLAYING';
+                    draw();
+                }
+            } else if (gameState === 'PLAYING') {
+                optionRects.forEach((optBox) => {
+                    if (
+                        mouseX >= optBox.x && mouseX <= optBox.x + optBox.w &&
+                        mouseY >= optBox.y && mouseY <= optBox.y + optBox.h
+                    ) {
+                        soundFX.playClick();
+                        selectedOption = optBox.index;
+                        const q = questionsData[currentQIndex];
+                        isCorrectAnswer = (selectedOption === q.correct);
+
+                        if (isCorrectAnswer) {
+                            score++;
+                            soundFX.playCorrect();
+                        } else {
+                            soundFX.playWrong();
+                        }
+
+                        gameState = 'FEEDBACK';
+                        draw();
+                    }
+                });
+            } else if (gameState === 'FEEDBACK') {
+                if (
+                    actionButtonRect &&
+                    mouseX >= actionButtonRect.x && mouseX <= actionButtonRect.x + actionButtonRect.w &&
+                    mouseY >= actionButtonRect.y && mouseY <= actionButtonRect.y + actionButtonRect.h
+                ) {
+                    soundFX.playClick();
+                    if (currentQIndex < questionsData.length - 1) {
+                        currentQIndex++;
+                        selectedOption = null;
+                        gameState = 'PLAYING';
+                    } else {
+                        gameState = 'GAMEOVER';
+                    }
+                    draw();
+                }
+            } else if (gameState === 'GAMEOVER') {
+                if (
+                    actionButtonRect &&
+                    mouseX >= actionButtonRect.x && mouseX <= actionButtonRect.x + actionButtonRect.w &&
+                    mouseY >= actionButtonRect.y && mouseY <= actionButtonRect.y + actionButtonRect.h
+                ) {
+                    soundFX.playClick();
+                    currentQIndex = 0;
+                    score = 0;
+                    selectedOption = null;
+                    gameState = 'PLAYING';
+                    draw();
+                }
+            }
+        });
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
+```eof
+
+### Tóm tắt trò chơi:
+* **Giao diện HTML5 Canvas:** Sáng sủa, chữ to rõ ràng với các khối màu sắc nổi bật.
+* **Hiệu ứng âm thanh:** Sử dụng `Web Audio API` tích hợp trực tiếp phát giai điệu vui tươi khi chọn đúng và âm trầm cảnh báo khi chọn sai.
+* **Giải thích chi tiết:** Có hộp thông tin hiển thị ngay lý do đúng/sai cho từng câu hỏi lịch sử Bài 3.
+* **Cách sử dụng:** Bạn có thể lưu mã trên thành một file `.html` (ví dụ: `lichsu9_bai3.html`) và tải lên Netlify, Vercel hoặc GitHub Pages để tạo link chia sẻ cho học sinh làm bài hoàn toàn miễn phí! Chúc bạn có những giờ dạy học thật thú vị!
